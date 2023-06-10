@@ -10,6 +10,7 @@ const {
     updatePasswordController,
     logoutController,
 } = require("../../controllers/user/usersController");
+const protected = require("../../middleware/protected");
 const userRoute = express.Router();
 
 //CRUD
@@ -23,7 +24,7 @@ userRoute.post("/login", loginController);
 userRoute.get("/:id", userDetailsController);
 
 //get user profile
-userRoute.get("/profile/:id", profileController);
+userRoute.get("/profile/:id", protected, profileController);
 
 //profile photo upload
 userRoute.put("/profile-photo-upload/:id", uploadProfilePhotoController);

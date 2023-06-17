@@ -29,7 +29,7 @@ const registerUserController = async (req, res) => {
 };
 
 //login controller
-const loginController = async (req, res) => {
+const loginController = async (req, res, next) => {
   const {email, password} = req.body;
   try {
     const isUserFound = await User.findOne({email});
@@ -71,8 +71,7 @@ const userDetailsController = async (req, res) => {
 const profileController = async (req, res) => {
   try {
     const userID = req.session.userAuth;
-    //find the user
-    const user = await User.findById(userID);
+    const user = await User.findById(userID).populate('posts').populate('comments');
     res.json({
       status: "success",
       data: user,
@@ -83,11 +82,23 @@ const profileController = async (req, res) => {
 };
 
 //upload profile photo
-const uploadProfilePhotoController = async (req, res) => {
+const uploadProfilePhotoController = async (req, res, next) => {
   try {
+    const userId = req.session.userAuth;
+    const userFound = await User.findById(userId);
+    if(!userFound) {
+      return next(appErr("User not Found", 403));
+    }
+    const userUpdated = await User.findByIdAndUpdate(userId, {
+      profileImage: req.file.path,
+    },
+    {
+      new: true,
+    },
+    );
     res.json({
       status: "success",
-      user: "User profile image upload",
+      data: userUpdated,
     });
   } catch (error) {
     res.json(error);
@@ -109,10 +120,22 @@ const uploadCoverImgController = async (req, res) => {
 
 //update password
 const updatePasswordController = async (req, res) => {
+  const {password} = req.body;
   try {
+   if(password){
+     const salt = brcrypt.genSalt(3);
+     const hashedPassword = brcrypt.hash(password, salt);
+    }
+    await User.findByIdAndUpdate(req.params.id,
+      {
+        password: hashedPassword,
+      },
+      {
+        new: true,
+      });
     res.json({
       status: "success",
-      user: "User password update",
+      user: "User password updated",
     });
   } catch (error) {
     res.json(error);
